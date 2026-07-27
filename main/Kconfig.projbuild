@@ -1,4 +1,4 @@
-menu "Mouth"
+menu "Blech"
     config CHAT_WIFI_SSID
         string "Wi-Fi SSID (empty starts setup access point)"
         default ""
@@ -21,11 +21,11 @@ menu "Mouth"
 
     config CHAT_AP_SSID
         string "Fallback access point SSID"
-        default "Mouth"
+        default "Blech"
 
     config CHAT_AP_PASSWORD
         string "Fallback access point password (8+ chars)"
-        default "mouthchat"
+        default ""
 
     config CHAT_HTTPS_PORT
         int "HTTPS port"
@@ -34,7 +34,7 @@ menu "Mouth"
 
     config CHAT_BLE_NAME
         string "Bluetooth LE device name"
-        default "Mouth"
+        default "Blech"
 
     config CHAT_MAX_REQUEST_BYTES
         int "Maximum chat request size"

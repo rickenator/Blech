@@ -33,7 +33,7 @@ static esp_err_t captive_redirect(httpd_req_t *req, httpd_err_code_t error)
     httpd_resp_set_status(req, "302 Found");
     httpd_resp_set_hdr(req, "Location", "http://192.168.4.1/");
     httpd_resp_set_hdr(req, "Cache-Control", "no-store");
-    return httpd_resp_sendstr(req, "Open Mouth");
+    return httpd_resp_sendstr(req, "Open Blech");
 }
 
 static esp_err_t status_get(httpd_req_t *req)
