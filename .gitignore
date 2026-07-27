@@ -1,0 +1,7 @@
+/build/
+/sdkconfig
+/sdkconfig.old
+/main/vocab.h
+/main/certs/*.pem
+/model/model.bin
+/build54/

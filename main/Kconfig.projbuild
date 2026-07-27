@@ -1,0 +1,77 @@
+menu "Mouth"
+    config CHAT_WIFI_SSID
+        string "Wi-Fi SSID (empty starts setup access point)"
+        default ""
+
+    config CHAT_WIFI_PASSWORD
+        string "Wi-Fi password"
+        default ""
+
+    config CHAT_BACKEND_URL
+        string "OpenAI-compatible chat completions URL"
+        default "http://192.168.1.243:8081/v1/chat/completions"
+
+    config CHAT_BACKEND_MODEL
+        string "Backend model identifier"
+        default "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q4_K_M"
+
+    config CHAT_DEFAULT_MODE
+        string "Default inference mode (auto, lan, or local)"
+        default "auto"
+
+    config CHAT_AP_SSID
+        string "Fallback access point SSID"
+        default "Mouth"
+
+    config CHAT_AP_PASSWORD
+        string "Fallback access point password (8+ chars)"
+        default "mouthchat"
+
+    config CHAT_HTTPS_PORT
+        int "HTTPS port"
+        default 443
+        range 1 65535
+
+    config CHAT_BLE_NAME
+        string "Bluetooth LE device name"
+        default "Mouth"
+
+    config CHAT_MAX_REQUEST_BYTES
+        int "Maximum chat request size"
+        default 16384
+        range 1024 32768
+
+    config CHAT_MAX_RESPONSE_BYTES
+        int "Maximum response size"
+        default 2048
+        range 128 8192
+
+    config CHAT_MAX_AGENT_STEPS
+        int "Maximum model/tool loop steps"
+        default 3
+        range 1 6
+
+    config CHAT_MAX_PROMPT_BYTES
+        int "Maximum local-model prompt bytes"
+        default 1024
+        range 32 2048
+
+    config CHAT_MAX_GENERATED_TOKENS
+        int "Maximum local-model generated tokens"
+        default 128
+        range 1 512
+
+    config CHAT_MODEL_PARTITION_LABEL
+        string "Local model partition label"
+        default "model"
+endmenu
+
+    config STATUS_LED_GPIO
+        int "Status LED GPIO (-1 to disable)"
+        default -1
+        range -1 48
+
+    config STATUS_LED2_GPIO
+        int "Activity LED GPIO (-1 to disable)"
+        default -1
+        range -1 48

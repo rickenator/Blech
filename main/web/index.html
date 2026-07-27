@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#171714">
+  <title>Mouth</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page: #171714;
+      --panel: #23231f;
+      --panel-strong: #30302a;
+      --text: #faf9f2;
+      --muted: #b9b8ae;
+      --line: #46463e;
+      --accent: #ffb454;
+      --accent-ink: #261700;
+      --error: #ff9b8e;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--text);
+      font: 18px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, textarea, input, select { font: inherit; }
+
+    .app {
+      width: min(100%, 48rem);
+      min-height: 100dvh;
+      margin: 0 auto;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    header {
+      padding: max(1rem, env(safe-area-inset-top)) 1rem 0.85rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 6vw, 1.85rem);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin-top: 0.55rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .status::before {
+      content: "";
+      width: 0.7rem;
+      height: 0.7rem;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .status.ready::before { background: #70d98b; }
+    .status.error { color: var(--error); }
+    .status.error::before { background: var(--error); }
+
+    /* Provisioning view */
+    .provision {
+      padding: 1.5rem 1rem 2rem;
+      overflow-y: auto;
+    }
+    .provision h2 {
+      margin: 0 0 0.4rem;
+      font-size: 1.3rem;
+    }
+    .provision .lead {
+      margin: 0 0 1.5rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .provision-section {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 0.8rem;
+    }
+    .provision-section h3 {
+      margin: 0 0 0.75rem;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .step-num {
+      display: inline-flex;
+      width: 1.5rem;
+      height: 1.5rem;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-size: 0.8rem;
+      font-weight: 750;
+      flex: 0 0 auto;
+    }
+    .scan-btn {
+      width: 100%;
+    }
+    .network-list {
+      margin: 0.75rem 0 0;
+      display: grid;
+      gap: 0.4rem;
+    }
+    .network-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.7rem 0.85rem;
+      border: 1px solid var(--line);
+      border-radius: 0.65rem;
+      background: var(--page);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .network-item:hover { border-color: var(--accent); }
+    .network-item.selected {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, var(--page));
+    }
+    .network-item .name {
+      font-weight: 650;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .network-item .meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-left: 0.75rem;
+    }
+    .signal {
+      display: inline-block;
+      width: 0.9rem;
+      height: 0.9rem;
+      border-radius: 50%;
+    }
+    .signal.strong { background: #70d98b; }
+    .signal.medium { background: var(--accent); }
+    .signal.weak { background: var(--error); }
+    .lock { font-size: 0.85rem; }
+
+    label {
+      display: grid;
+      gap: 0.3rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+    }
+    label:last-child { margin-bottom: 0; }
+    input, select {
+      width: 100%;
+      min-height: 3rem;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: 0.65rem;
+      background: var(--page);
+      color: var(--text);
+    }
+    input:focus, select:focus {
+      outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
+      border-color: var(--accent);
+    }
+    .provision-result {
+      margin: 0.75rem 0 0;
+      font-size: 0.9rem;
+    }
+    .provision-result.error { color: var(--error); }
+    .provision-result.ok { color: #70d98b; }
+
+    /* Chat view */
+    .chat-wrap { display: contents; }
+    #messages {
+      min-height: 0;
+      overflow-y: auto;
+      padding: 1.25rem 1rem 2rem;
+      scroll-behavior: smooth;
+    }
+    .message {
+      width: fit-content;
+      max-width: 88%;
+      margin: 0 0 1rem;
+      padding: 0.8rem 1rem;
+      border-radius: 1rem;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .assistant {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-bottom-left-radius: 0.3rem;
+    }
+    .user {
+      margin-left: auto;
+      background: var(--accent);
+      color: var(--accent-ink);
+      border-bottom-right-radius: 0.3rem;
+    }
+    .message.pending { color: var(--muted); }
+
+    .settings-panel {
+      padding: 1rem;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    .settings-panel h2 {
+      margin: 0 0 0.8rem;
+      font-size: 1.15rem;
+    }
+    .settings-grid {
+      display: grid;
+      gap: 0.75rem;
+    }
+    .settings-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.85rem;
+    }
+    .settings-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.65rem;
+      padding: 0.8rem 1rem max(0.8rem, env(safe-area-inset-bottom));
+      background: var(--page);
+      border-top: 1px solid var(--line);
+    }
+    textarea {
+      width: 100%;
+      min-height: 3.35rem;
+      max-height: 9rem;
+      resize: vertical;
+      padding: 0.72rem 0.85rem;
+      border: 1px solid var(--line);
+      border-radius: 0.8rem;
+      background: var(--panel);
+      color: var(--text);
+    }
+    textarea:focus {
+      outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
+      border-color: var(--accent);
+    }
+    button {
+      min-height: 3.35rem;
+      padding: 0.65rem 1rem;
+      border: 0;
+      border-radius: 0.8rem;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 750;
+    }
+    button:disabled { opacity: 0.5; }
+
+    .hint {
+      grid-column: 1 / -1;
+      margin: -0.15rem 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+    @media (max-width: 28rem) {
+      body { font-size: 19px; }
+      .message { max-width: 94%; }
+      form { grid-template-columns: 1fr; }
+      .send { width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #messages { scroll-behavior: auto; }
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="app">
+
+    <!-- PROVISIONING VIEW -->
+    <header><div class="topline"><h1>Mouth</h1></div><div class="status" id="setupStatus">Set up Wi-Fi</div></header>
+
+    <div class="provision" id="provisionView">
+      <h2>Welcome</h2>
+      <p class="lead">Connect this device to your home network to get started. The chat agent will be available once it's online.</p>
+
+      <div class="provision-section">
+        <h3><span class="step-num">1</span> Choose your network</h3>
+        <button class="scan-btn" id="scanBtn" onclick="doScan()">Scan for networks</button>
+        <div class="network-list" id="networkList"></div>
+        <div class="provision-result hidden" id="scanResult"></div>
+      </div>
+
+      <div class="provision-section" id="pwSection">
+        <h3><span class="step-num">2</span> Enter password</h3>
+        <label>Wi-Fi password
+          <input id="wifiPassword" maxlength="64" type="password"
+            autocomplete="new-password"
+            placeholder="Password for selected network">
+        </label>
+      </div>
+
+      <div class="provision-section">
+        <h3><span class="step-num">3</span> LAN model (optional)</h3>
+        <label>Backend URL
+          <input id="backendUrl" maxlength="159" autocomplete="off"
+            placeholder="http://192.168.1.243:8081/v1/chat/completions">
+        </label>
+        <label>Model
+          <input id="backendModel" maxlength="127" autocomplete="off"
+            placeholder="unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q4_K_M">
+        </label>
+        <label>Agent mode
+          <select id="mode">
+            <option value="auto" selected>Auto (LAN first, local fallback)</option>
+            <option value="lan">LAN only</option>
+            <option value="local">Local only</option>
+          </select>
+        </label>
+      </div>
+
+      <button style="width:100%;font-size:1.1rem" id="saveProvisionBtn" onclick="saveProvision()" disabled>
+        Connect to network
+      </button>
+      <div class="provision-result hidden" id="provisionResult"></div>
+    </div>
+
+    <!-- CHAT VIEW -->
+    <div class="chat-wrap hidden" id="chatView">
+      <div class="settings-panel hidden" id="settingsPanel">
+        <h2>Settings</h2>
+        <div class="settings-grid">
+          <label>Home Wi-Fi
+            <input id="chatSsid" maxlength="32" autocomplete="off"
+              placeholder="Wi-Fi network name">
+          </label>
+          <label>Wi-Fi password
+            <input id="chatPassword" maxlength="64" type="password"
+              autocomplete="new-password"
+              placeholder="Leave blank to keep saved password">
+          </label>
+          <label>Backend URL
+            <input id="chatBackendUrl" maxlength="159" autocomplete="off"
+              placeholder="http://192.168.1.243:8081/v1/chat/completions">
+          </label>
+          <label>Model
+            <input id="chatBackendModel" maxlength="127" autocomplete="off"
+              placeholder="unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q4_K_M">
+          </label>
+          <label>Agent mode
+            <select id="chatMode">
+              <option value="auto">Auto</option>
+              <option value="lan">LAN</option>
+              <option value="local">Local</option>
+            </select>
+          </label>
+        </div>
+        <div class="settings-actions">
+          <button id="chatSaveBtn">Save</button>
+          <p class="settings-note" id="chatSettingsResult"></p>
+        </div>
+      </div>
+
+      <div id="messages"></div>
+
+      <form id="chatForm">
+        <textarea id="prompt" rows="1" placeholder="Type a message…" autofocus></textarea>
+        <div>
+          <button type="submit" id="send" class="send">Send</button>
+          <p class="hint">Shift+Enter for new line</p>
+        </div>
+      </form>
+    </div>
+
+  </main>
+
+  <script>
+    const provView = document.querySelector("#provisionView");
+    const chatView = document.querySelector("#chatView");
+    const setupStatus = document.querySelector("#setupStatus");
+    const scanBtn = document.querySelector("#scanBtn");
+    const networkList = document.querySelector("#networkList");
+    const scanResult = document.querySelector("#scanResult");
+    const wifiPassword = document.querySelector("#wifiPassword");
+    const saveProvisionBtn = document.querySelector("#saveProvisionBtn");
+    const provisionResult = document.querySelector("#provisionResult");
+    const backendUrl = document.querySelector("#backendUrl");
+    const backendModel = document.querySelector("#backendModel");
+    const modeSelect = document.querySelector("#mode");
+
+    let selectedSsid = "";
+
+    function showResult(el, text, kind) {
+      el.textContent = text;
+      el.className = `provision-result ${kind}`;
+      el.classList.remove("hidden");
+    }
+    function hideResult(el) { el.classList.add("hidden"); }
+
+    function signalClass(rssi) {
+      if (rssi >= -60) return "strong";
+      if (rssi >= -75) return "medium";
+      return "weak";
+    }
+
+    async function doScan() {
+      scanBtn.disabled = true;
+      scanBtn.textContent = "Scanning…";
+      hideResult(scanResult);
+      networkList.innerHTML = "";
+      selectedSsid = "";
+      saveProvisionBtn.disabled = true;
+      try {
+        const resp = await fetch("/api/wifi-scan");
+        const data = await resp.json();
+        const nets = data.networks || [];
+        if (nets.length === 0) {
+          showResult(scanResult, "No networks found. Try scanning again.", "error");
+          return;
+        }
+        const sorted = nets.sort((a, b) => b.rssi - a.rssi);
+        for (const net of sorted) {
+          const item = document.createElement("div");
+          item.className = "network-item";
+          item.innerHTML = '<span class="name">' + he(net.ssid) + '</span>'
+            + '<span class="meta">'
+            + '<span class="signal ' + signalClass(net.rssi) + '" title="' + net.rssi + ' dBm"></span>'
+            + (net.secure ? '<span class="lock">🔒</span>' : '')
+            + '</span>';
+          item.onclick = function() {
+            document.querySelectorAll(".network-item").forEach(el => el.classList.remove("selected"));
+            item.classList.add("selected");
+            selectedSsid = net.ssid;
+            saveProvisionBtn.disabled = false;
+            wifiPassword.focus();
+          };
+          networkList.appendChild(item);
+        }
+        showResult(scanResult, nets.length + " network" + (nets.length > 1 ? "s" : "") + " found", "ok");
+      } catch (e) {
+        showResult(scanResult, "Scan failed. Check that the device is on.", "error");
+      } finally {
+        scanBtn.disabled = false;
+        scanBtn.textContent = "Scan for networks";
+      }
+    }
+
+    async function saveProvision() {
+      if (!selectedSsid) return;
+      saveProvisionBtn.disabled = true;
+      saveProvisionBtn.textContent = "Connecting…";
+      hideResult(provisionResult);
+      const payload = {
+        ssid: selectedSsid,
+        backend_url: backendUrl.value.trim(),
+        model: backendModel.value.trim(),
+        mode: modeSelect.value
+      };
+      const pw = wifiPassword.value;
+      if (pw) payload.password = pw;
+      try {
+        const resp = await fetch("/api/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) throw new Error(await resp.text());
+        showResult(provisionResult, "Connecting to " + he(selectedSsid) + "…", "ok");
+        await new Promise(r => setTimeout(r, 4000));
+        checkIfOnline();
+      } catch (e) {
+        showResult(provisionResult, "Save failed: " + e.message, "error");
+        saveProvisionBtn.disabled = false;
+        saveProvisionBtn.textContent = "Connect to network";
+      }
+    }
+
+    function he(str) {
+      const el = document.createElement("span");
+      el.textContent = str;
+      return el.innerHTML;
+    }
+
+    async function checkIfOnline() {
+      try {
+        const resp = await fetch("/api/config");
+        const cfg = await resp.json();
+        if (cfg.ssid) {
+          switchToChat();
+          return;
+        }
+      } catch (_) {}
+      // still provisioning or failed
+      saveProvisionBtn.disabled = false;
+      saveProvisionBtn.textContent = "Connect to network";
+      setupStatus.textContent = "Not connected — try again";
+      setupStatus.className = "status error";
+    }
+
+    async function switchToChat() {
+      provView.classList.add("hidden");
+      chatView.classList.remove("hidden");
+
+      const stResp = await fetch("/api/status");
+      const st = await stResp.json();
+      const mode = st.mode === "local" ? "Local" : st.mode === "lan" ? "LAN" : "Auto";
+      setupStatus.textContent = st.ready ? mode + " agent ready" : st.status;
+      setupStatus.className = "status " + (st.ready ? "ready" : "error");
+
+      loadChatSettings();
+      setInterval(pollChatStatus, 5000);
+    }
+
+    /* ---- Chat UI ---- */
+    const messages = document.querySelector("#messages");
+    const promptNode = document.querySelector("#prompt");
+    const sendButton = document.querySelector("#send");
+    const history = [];
+
+    function addMessage(text, kind, pending) {
+      const msg = document.createElement("div");
+      msg.className = "message " + kind + (pending ? " pending" : "");
+      msg.textContent = text;
+      messages.appendChild(msg);
+      messages.scrollTop = messages.scrollHeight;
+      return msg;
+    }
+
+    async function pollChatStatus() {
+      try {
+        const resp = await fetch("/api/status");
+        const data = await resp.json();
+        const mode = data.mode === "local" ? "Local" : data.mode === "lan" ? "LAN" : "Auto";
+        setupStatus.textContent = data.ready ? mode + " agent ready" : data.status;
+        setupStatus.className = "status " + (data.ready ? "ready" : "error");
+      } catch (_) {
+        setupStatus.textContent = "Cannot reach the ESP32 service";
+        setupStatus.className = "status error";
+      }
+    }
+
+    async function sendMessage() {
+      const prompt = promptNode.value.trim();
+      if (!prompt || sendButton.disabled) return;
+      addMessage(prompt, "user");
+      history.push({ role: "user", content: prompt });
+      promptNode.value = "";
+      sendButton.disabled = true;
+      promptNode.disabled = true;
+      const reply = addMessage("", "assistant");
+      let fullText = "";
+      try {
+        const resp = await fetch("/api/chat/stream", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: history })
+        });
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          fullText += chunk;
+          reply.textContent = fullText;
+          messages.scrollTop = messages.scrollHeight;
+        }
+        if (resp.ok) history.push({ role: "assistant", content: fullText });
+        reply.classList.remove("pending");
+      } catch (_) {
+        reply.textContent = "The ESP32 connection was lost. Reconnect to its Wi-Fi network and try again.";
+        reply.classList.remove("pending");
+      } finally {
+        sendButton.disabled = false;
+        promptNode.disabled = false;
+        promptNode.focus();
+        messages.scrollTop = messages.scrollHeight;
+      }
+    }
+
+    document.querySelector("#chatForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      sendMessage();
+    });
+    promptNode.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); document.querySelector("#chatForm").requestSubmit(); }
+    });
+
+    /* Chat settings (after provisioning) */
+    const settingsPanel = document.querySelector("#settingsPanel");
+    const chatSsid = document.querySelector("#chatSsid");
+    const chatPassword = document.querySelector("#chatPassword");
+    const chatBackendUrl = document.querySelector("#chatBackendUrl");
+    const chatBackendModel = document.querySelector("#chatBackendModel");
+    const chatMode = document.querySelector("#chatMode");
+    const chatSaveBtn = document.querySelector("#chatSaveBtn");
+    const chatSettingsResult = document.querySelector("#chatSettingsResult");
+
+    async function loadChatSettings() {
+      try {
+        const resp = await fetch("/api/config");
+        const data = await resp.json();
+        chatSsid.value = data.ssid || "";
+        chatBackendUrl.value = data.backend_url || "";
+        chatBackendModel.value = data.model || "";
+        chatMode.value = data.mode || "auto";
+      } catch (_) {
+        chatSettingsResult.textContent = "Could not load settings.";
+      }
+    }
+
+    chatSaveBtn.addEventListener("click", async function() {
+      chatSettingsResult.textContent = "Saving…";
+      const payload = {
+        ssid: chatSsid.value.trim(),
+        backend_url: chatBackendUrl.value.trim(),
+        model: chatBackendModel.value.trim(),
+        mode: chatMode.value
+      };
+      const pw = chatPassword.value;
+      if (pw) payload.password = pw;
+      try {
+        const resp = await fetch("/api/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) throw new Error(await resp.text());
+        chatSettingsResult.textContent = "Saved.";
+        chatPassword.value = "";
+        setTimeout(pollChatStatus, 2500);
+      } catch (e) {
+        chatSettingsResult.textContent = "Save failed: " + e.message;
+      }
+    });
+
+    addEventListener("click", function(e) {
+      if (e.target.id === "setupStatus" && !chatView.classList.contains("hidden")) {
+        settingsPanel.hidden = !settingsPanel.hidden;
+      }
+    });
+    setupStatus.style.cursor = "default";
+
+    /* ---- Startup ---- */
+    (async function init() {
+      try {
+        const resp = await fetch("/api/config");
+        const cfg = await resp.json();
+        if (cfg.ssid) {
+          backendUrl.value = cfg.backend_url || "";
+          backendModel.value = cfg.model || "";
+          modeSelect.value = cfg.mode || "auto";
+          switchToChat();
+        } else {
+          backendUrl.value = cfg.backend_url || "";
+          backendModel.value = cfg.model || "";
+          modeSelect.value = cfg.mode || "auto";
+          setupStatus.textContent = "Set up Wi-Fi";
+          setupStatus.className = "status";
+        }
+      } catch (_) {
+        setupStatus.textContent = "Cannot reach device";
+        setupStatus.className = "status error";
+      }
+    })();
+  </script>
+</body>
+</html>
