@@ -21,6 +21,7 @@
 #define HAVE_VOCAB 1
 #else
 #define HAVE_VOCAB 0
+#include "token_defs.h"
 #endif
 
 static const char *TAG = "llm";
@@ -263,6 +264,17 @@ static size_t append_token(int token, char *out, size_t used, size_t capacity)
     out[used + len] = '\0';
     return used + len;
 }
+#else
+/* CI stub — firmware will not tokenize correctly without vocab.h */
+static size_t append_token(int token, char *out, size_t used, size_t capacity)
+{
+    (void)token;
+    if (used + 3 < capacity) {
+        out[used] = '?'; out[used+1] = '\0';
+        return used + 1;
+    }
+    return used;
+}
 #endif
 
 esp_err_t llm_generate(const char *prompt, char *response, size_t max_len)
@@ -406,8 +418,18 @@ esp_err_t llm_generate_stream(const char *prompt,
                 best = token;
             }
         }
-        if (best == TOKEN_ENDOFTEXT || best == TOKEN_USER ||
-            best == TOKEN_ASSISTANT || best == TOKEN_TOOL) break;
+#ifdef TOKEN_ENDOFTEXT
+        if (best == TOKEN_ENDOFTEXT) break;
+#endif
+#ifdef TOKEN_USER
+        if (best == TOKEN_USER) break;
+#endif
+#ifdef TOKEN_ASSISTANT
+        if (best == TOKEN_ASSISTANT) break;
+#endif
+#ifdef TOKEN_TOOL
+        if (best == TOKEN_TOOL) break;
+#endif
         size_t before = used;
         used = append_token(best, full_response, used, max_len);
         if (on_token && used > before) {
