@@ -8,6 +8,13 @@ It generates text at about 3.5 tokens per second while burning through the last
 shreds of its dignity. Connect to its Wi-Fi, open the page, and get insulted by
 something that costs less than a sandwich.
 
+Built on top of [slvDev/esp32-ai](https://github.com/slvDev/esp32-ai), the
+project that first proved a 28.9M parameter model could run on an $8 ESP32-S3
+using Google's Per-Layer Embeddings. That work is the reason any of this fits.
+Our contribution here is the personality — turning a language model into a
+depressed, contemptuous honeypot with structured logging, streaming insults,
+and way too many blinky LED patterns.
+
 The model uses Google's Per-Layer Embeddings (from Gemma) to cram 25 million
 parameters into a flash lookup table, leaving just enough SRAM for it to compute
 how much it hates you.
@@ -38,7 +45,7 @@ how much it hates you.
 
 ### How it works
 
-It's a PLE TinyLM — a transformer with Per-Layer Embeddings, the same trick
+It's a PLE TinyLM — the C inference engine, model architecture, and quantization scheme come from [slvDev/esp32-ai](https://github.com/slvDev/esp32-ai), which first demonstrated a 28.9M-param model on this hardware. It uses Per-Layer Embeddings, the same trick
 Google used in Gemma 3n and Gemma 4 to put large models on small devices.
 Instead of loading the whole model into expensive SRAM, 25 million parameters
 sit idly in a flash lookup table. The model reads one row per layer per token —
