@@ -3,6 +3,10 @@
 > "Life? Don't talk to me about life."
 > — a $8 microcontroller, probably
 
+<p align="center">
+  <img src="media/blech-chat.png" width="320" alt="Blech chat UI showing Marvin insult">
+</p>
+
 Blech is a 28.9 million parameter language model running entirely on an ESP32-S3.
 It generates text at about 3.5 tokens per second while burning through the last
 shreds of its dignity. Connect to its Wi-Fi, open the page, and get insulted by
