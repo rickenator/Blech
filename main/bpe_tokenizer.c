@@ -1,6 +1,10 @@
 #include "bpe_tokenizer.h"
 #include "bpe_encoder.h"
+#if __has_include("vocab.h")
 #include "vocab.h"
+#else
+#include "token_defs.h"
+#endif
 
 /* Special tokens: must be matched first, before byte-level BPE */
 static const struct { const char *s; int id; int len; } SPECIALS[] = {
