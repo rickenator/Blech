@@ -37,6 +37,10 @@ jobs:
           cd esp-idf
           ./install.sh esp32s3
 
+      - name: Generate dev certificate
+        run: |
+          ./tools/generate-dev-cert.sh
+
       - name: Build firmware
         run: |
           . ~/esp/esp-idf/export.sh
