@@ -14,6 +14,7 @@
 #define LLM_PROFILE
 #define LLM_PROFILE_NOW() esp_timer_get_time()
 #include "llm.h"
+#include "bpe_tokenizer.h"
 
 #if __has_include("vocab.h")
 #include "vocab.h"
@@ -275,7 +276,7 @@ esp_err_t llm_generate(const char *prompt, char *response, size_t max_len)
         return ESP_ERR_INVALID_STATE;
     }
     int tokens[CONFIG_CHAT_MAX_PROMPT_BYTES];
-    int n_prompt = tokenize_greedy(prompt, tokens,
+    int n_prompt = bpe_encode(prompt, tokens,
                                    CONFIG_CHAT_MAX_PROMPT_BYTES);
     if (n_prompt <= 0 || n_prompt >= model.c.seq_len) {
         snprintf(response, max_len,
@@ -372,7 +373,7 @@ esp_err_t llm_generate_stream(const char *prompt,
         return ESP_ERR_INVALID_STATE;
     }
     int tokens[CONFIG_CHAT_MAX_PROMPT_BYTES];
-    int n_prompt = tokenize_greedy(prompt, tokens,
+    int n_prompt = bpe_encode(prompt, tokens,
                                    CONFIG_CHAT_MAX_PROMPT_BYTES);
     if (n_prompt <= 0 || n_prompt >= model.c.seq_len) {
         snprintf(full_response, max_len,
@@ -410,9 +411,9 @@ esp_err_t llm_generate_stream(const char *prompt,
         size_t before = used;
         used = append_token(best, full_response, used, max_len);
         if (on_token && used > before) {
-            char chunk[4];
+            char chunk[32];
             size_t clen = used - before;
-            if (clen > 3) clen = 3;
+            if (clen > 31) clen = 31;
             memcpy(chunk, full_response + before, clen);
             chunk[clen] = '\0';
             if (!on_token(chunk, ctx)) break;

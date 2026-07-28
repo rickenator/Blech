@@ -6,6 +6,7 @@ idf_component_register(
         "settings_store.c"
         "chat_service.c"
         "llm_inference.c"
+        "bpe_tokenizer.c"
         "https_server.c"
         "wifi_manager.c"
         "honeypot_log.c"
