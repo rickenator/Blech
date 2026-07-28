@@ -8,6 +8,8 @@
 #include "esp_log.h"
 #include "sdkconfig.h"
 #include "chat_service.h"
+#include "status_led.h"
+#include "honeypot_log.h"
 #include "settings_store.h"
 #include "wifi_manager.h"
 
@@ -22,6 +24,7 @@ extern const unsigned char index_html_end[]
 
 static esp_err_t root_get(httpd_req_t *req)
 {
+    status_led_set(STATUS_LED_AP_ACTIVE);
     httpd_resp_set_type(req, "text/html; charset=utf-8");
     return httpd_resp_send(req, (const char *)index_html_start,
                            index_html_end - index_html_start - 1);
@@ -51,6 +54,8 @@ static esp_err_t status_get(httpd_req_t *req)
                           wifi_manager_station_connected());
     cJSON_AddStringToObject(root, "mode", settings.mode);
     cJSON_AddStringToObject(root, "station_ip", ip);
+    honeypot_log_http("GET", "/api/status", 200);
+    status_led_set(STATUS_LED_TALKING);
     cJSON_AddStringToObject(root, "status", chat_service_model_status());
     cJSON_AddStringToObject(root, "local_status",
                             chat_service_local_status());
@@ -89,6 +94,7 @@ static char *receive_body(httpd_req_t *req, size_t maximum)
 
 static esp_err_t chat_post(httpd_req_t *req)
 {
+    status_led_set(STATUS_LED_THINKING);
     char *request = receive_body(req, CONFIG_CHAT_MAX_REQUEST_BYTES);
     char *response = calloc(1, CONFIG_CHAT_MAX_RESPONSE_BYTES);
     if (!request || !response) {
@@ -118,6 +124,8 @@ static esp_err_t config_get(httpd_req_t *req)
     app_settings_t settings;
     settings_store_get(&settings);
     cJSON *root = cJSON_CreateObject();
+    honeypot_log_http("GET", "/api/config", 200);
+    status_led_set(STATUS_LED_TALKING);
     cJSON_AddStringToObject(root, "ssid", settings.ssid);
     cJSON_AddStringToObject(root, "backend_url", settings.backend_url);
     cJSON_AddStringToObject(root, "model", settings.model);
@@ -179,6 +187,8 @@ static esp_err_t config_post(httpd_req_t *req)
             sizeof(settings.backend_url));
     strlcpy(settings.model, model->valuestring, sizeof(settings.model));
     strlcpy(settings.mode, mode->valuestring, sizeof(settings.mode));
+    status_led_set(STATUS_LED_TALKING);
+    honeypot_log_provision("config_save", settings.ssid[0] ? settings.ssid : "cleared");
     esp_err_t err = settings_store_save(&settings);
     cJSON_Delete(root);
     if (err == ESP_OK) {
@@ -195,6 +205,8 @@ static esp_err_t config_post(httpd_req_t *req)
 
 static esp_err_t wifi_scan_get(httpd_req_t *req)
 {
+    honeypot_log_http("GET", "/api/wifi-scan", 200);
+    status_led_set(STATUS_LED_TALKING);
     wifi_scan_ap_t aps[WIFI_SCAN_MAX_AP];
     int count = wifi_manager_scan(aps, WIFI_SCAN_MAX_AP);
     cJSON *root = cJSON_CreateObject();
@@ -224,6 +236,9 @@ static bool stream_on_token(const char *text, void *ctx)
 
 static esp_err_t chat_post_stream(httpd_req_t *req)
 {
+    honeypot_log_http("POST", "/api/chat/stream", 200);
+    status_led_set(STATUS_LED_THINKING);
+
     char *request = receive_body(req, CONFIG_CHAT_MAX_REQUEST_BYTES);
     char *response = calloc(1, CONFIG_CHAT_MAX_RESPONSE_BYTES);
     if (!request || !response) {

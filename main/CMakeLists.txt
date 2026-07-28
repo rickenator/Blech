@@ -8,6 +8,7 @@ idf_component_register(
         "llm_inference.c"
         "https_server.c"
         "wifi_manager.c"
+        "honeypot_log.c"
         "bt_manager.c"
     INCLUDE_DIRS "."
     EMBED_TXTFILES

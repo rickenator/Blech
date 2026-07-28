@@ -11,6 +11,7 @@
 #include "status_led.h"
 #include "wifi_manager.h"
 #include "serial_repl.h"
+#include "honeypot_log.h"
 
 static const char *TAG = "app";
 
@@ -30,6 +31,8 @@ void app_main(void)
     status_led_init();
 
     ESP_ERROR_CHECK(chat_service_start());
+
+    honeypot_log_init();
 
     err = wifi_manager_start();
     serial_repl_start();

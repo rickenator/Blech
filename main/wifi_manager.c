@@ -11,6 +11,7 @@
 #include "dns_server.h"
 #include "settings_store.h"
 #include "status_led.h"
+#include "honeypot_log.h"
 
 static const char *TAG = "wifi";
 static int reconnect_attempts;
@@ -30,6 +31,7 @@ static void wifi_event(void *arg, esp_event_base_t base, int32_t id, void *data)
         }
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
         station_connected = false;
+        honeypot_log_wifi("sta_disconnected", NULL);
         station_ip[0] = '\0';
         if (station_configured && reconnect_attempts++ < 10) {
             esp_wifi_connect();
@@ -44,15 +46,18 @@ static void wifi_event(void *arg, esp_event_base_t base, int32_t id, void *data)
         snprintf(station_ip, sizeof(station_ip), IPSTR,
                  IP2STR(&event->ip_info.ip));
         ESP_LOGI(TAG, "station address: " IPSTR, IP2STR(&event->ip_info.ip));
+        honeypot_log_wifi("sta_connected", station_ip);
         status_led_set(STATUS_LED_CONNECTED);
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STACONNECTED) {
         wifi_event_ap_staconnected_t *event = data;
         ESP_LOGI(TAG, "AP client " MACSTR " joined, AID=%d",
                  MAC2STR(event->mac), event->aid);
+        honeypot_log_wifi("ap_client_joined", NULL);
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STADISCONNECTED) {
         wifi_event_ap_stadisconnected_t *event = data;
         ESP_LOGI(TAG, "AP client " MACSTR " left, AID=%d, reason=%d",
                  MAC2STR(event->mac), event->aid, event->reason);
+        honeypot_log_wifi("ap_client_left", NULL);
     }
 }
 
@@ -66,6 +71,7 @@ esp_err_t wifi_manager_apply_station(void)
 
     if (!station_configured) {
         station_connected = false;
+        honeypot_log_wifi("sta_disconnected", NULL);
         station_ip[0] = '\0';
         esp_err_t err = esp_wifi_disconnect();
         return err == ESP_ERR_WIFI_NOT_CONNECT ? ESP_OK : err;

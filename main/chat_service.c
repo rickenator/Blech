@@ -15,6 +15,7 @@
 #include "llm_inference.h"
 #include "sdkconfig.h"
 #include "settings_store.h"
+#include "honeypot_log.h"
 #include "wifi_manager.h"
 #include "status_led.h"
 
@@ -324,7 +325,7 @@ static esp_err_t run_local_stream(cJSON *messages, char *response, size_t respon
 static esp_err_t run_agent(cJSON *messages, char *response,
                            size_t response_size)
 {
-    status_led_set(STATUS_LED_INFERENCE);
+    status_led_set(STATUS_LED_THINKING);
     for (int step = 0; step < CONFIG_CHAT_MAX_AGENT_STEPS; step++) {
         cJSON *message = NULL;
         esp_err_t err = backend_message(messages, &message);
@@ -380,7 +381,7 @@ static esp_err_t run_agent(cJSON *messages, char *response,
 static esp_err_t run_local(cJSON *messages, char *response,
                            size_t response_size)
 {
-    status_led_set(STATUS_LED_INFERENCE);
+    status_led_set(STATUS_LED_THINKING);
     if (!local_ready) {
         snprintf(response, response_size,
                  "Local dialogue model is not installed yet. "
@@ -726,7 +727,7 @@ static esp_err_t run_local_stream(
     cJSON *messages, char *response, size_t response_size,
     chat_token_cb_t on_token, void *ctx)
 {
-    status_led_set(STATUS_LED_INFERENCE);
+    status_led_set(STATUS_LED_THINKING);
     if (!local_ready) {
         const char *err_str =
             "Local dialogue model is not installed yet.";

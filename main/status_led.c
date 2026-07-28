@@ -15,110 +15,109 @@ static const char *TAG = "led";
 #define CONFIG_STATUS_LED2_GPIO -1
 #endif
 
-static int gpio_pin = CONFIG_STATUS_LED_GPIO;
-static int gpio_pin2 = CONFIG_STATUS_LED2_GPIO;
+static int gpio1 = CONFIG_STATUS_LED_GPIO;   /* status — GPIO48 */
+static int gpio2 = CONFIG_STATUS_LED2_GPIO;  /* activity — GPIO47 */
 static esp_timer_handle_t led_timer;
 static volatile status_led_state_t current_state = STATUS_LED_OFF;
 static volatile int tick;
+static volatile bool active;
 
-static void led_on(int pin)
-{
-    if (pin < 0) return;
-    gpio_set_level(pin, 1);
-}
-
-static void led_off(int pin)
-{
-    if (pin < 0) return;
-    gpio_set_level(pin, 0);
-}
-
-static void led_update(int pin, bool on)
-{
-    if (pin < 0) return;
-    gpio_set_level(pin, on ? 1 : 0);
-}
+static inline void set1(int v) { if (gpio1 >= 0) gpio_set_level(gpio1, v); }
+static inline void set2(int v) { if (gpio2 >= 0) gpio_set_level(gpio2, v); }
 
 static void timer_cb(void *arg)
 {
     (void)arg;
     tick++;
+    int t = tick;
 
     switch (current_state) {
     case STATUS_LED_OFF:
-        led_off(gpio_pin);
-        led_off(gpio_pin2);
+        set1(0); set2(0);
         break;
 
     case STATUS_LED_BOOTING:
-        // fast blink ~4Hz: on for 1 tick, off for 1 tick
-        led_update(gpio_pin, (tick & 1) == 0);
-        led_off(gpio_pin2);
+        /* frantic 8Hz asymmetric: LED1 flicker, LED2 heartbeat */
+        set1((t & 1) ? 0 : 1);
+        set2((t % 8) < 2 ? 1 : 0);
         break;
 
     case STATUS_LED_AP_ACTIVE:
-        // slow steady blink ~1Hz: on for 2 ticks, off for 2 ticks
-        led_update(gpio_pin, (tick & 3) < 2);
-        led_off(gpio_pin2);
+        /* slow breathe with LED2 occasional contempt-twitch */
+        set1((t & 3) < 2 ? 1 : 0);
+        set2((t % 20) == 0 ? 1 : 0);
         break;
 
     case STATUS_LED_CONNECTING:
-        // rapid double-blink: on-off-on-off-off-off
-        led_update(gpio_pin, (tick % 6) < 2 || (tick % 6) == 3);
-        led_off(gpio_pin2);
+        /* impatient: LED1 double-tap, LED2 off */
+        set1((t % 6) < 2 || (t % 6) == 3 ? 1 : 0);
+        set2(0);
         break;
 
     case STATUS_LED_CONNECTED:
-        // solid on
-        led_on(gpio_pin);
-        led_off(gpio_pin2);
+        /* smug solid LED1, occasional LED2 wink */
+        set1(1);
+        set2((t % 60) < 2 ? 1 : 0);  /* wink every ~7.5s */
         break;
 
-    case STATUS_LED_INFERENCE:
-        // breathing slow pulse: LED2 rapid flicker, LED1 solid
-        led_on(gpio_pin);
-        led_update(gpio_pin2, (tick & 1) == 0);
+    case STATUS_LED_THINKING:
+        /* chaser pattern: LED1→LED2→both off */
+        set1((t % 4) == 0 ? 1 : 0);
+        set2((t % 4) == 1 ? 1 : 0);
+        break;
+
+    case STATUS_LED_TALKING:
+        /* LED2 stutter-sync with token output, LED1 aggressive flash */
+        set1((t & 1) ? 0 : 1);
+        set2((t % 3) == 0 ? 1 : 0);
         break;
 
     case STATUS_LED_ERROR:
-        // triple flash: on-off-on-off-on-off-off-off
-        led_update(gpio_pin, (tick % 8) < 5 && (tick & 1) == 0);
-        led_off(gpio_pin2);
+        /* SOS triple: ... --- ... at LED speed */
+        {
+            int phase = t % 24;
+            if (phase < 2 || (phase >= 4 && phase < 6) || (phase >= 8 && phase < 10))
+                { set1(1); set2(1); }
+            else if (phase >= 12 && phase < 20)
+                { set1(1); set2(1); }
+            else
+                { set1(0); set2(0); }
+        }
         break;
     }
 }
 
 esp_err_t status_led_init(void)
 {
-    if (gpio_pin < 0 && gpio_pin2 < 0) {
+    if (gpio1 < 0 && gpio2 < 0) {
         ESP_LOGW(TAG, "no LED GPIO configured, skipping");
         return ESP_OK;
     }
 
-    if (gpio_pin >= 0) {
+    if (gpio1 >= 0) {
         gpio_config_t cfg = {
-            .pin_bit_mask = (1ULL << gpio_pin),
+            .pin_bit_mask = (1ULL << gpio1),
             .mode = GPIO_MODE_OUTPUT,
             .pull_up_en = GPIO_PULLUP_DISABLE,
             .pull_down_en = GPIO_PULLDOWN_DISABLE,
             .intr_type = GPIO_INTR_DISABLE,
         };
         ESP_ERROR_CHECK(gpio_config(&cfg));
-        gpio_set_level(gpio_pin, 0);
-        ESP_LOGI(TAG, "status LED on GPIO %d", gpio_pin);
+        gpio_set_level(gpio1, 0);
+        ESP_LOGI(TAG, "status LED on GPIO%d", gpio1);
     }
 
-    if (gpio_pin2 >= 0) {
+    if (gpio2 >= 0) {
         gpio_config_t cfg = {
-            .pin_bit_mask = (1ULL << gpio_pin2),
+            .pin_bit_mask = (1ULL << gpio2),
             .mode = GPIO_MODE_OUTPUT,
             .pull_up_en = GPIO_PULLUP_DISABLE,
             .pull_down_en = GPIO_PULLDOWN_DISABLE,
             .intr_type = GPIO_INTR_DISABLE,
         };
         ESP_ERROR_CHECK(gpio_config(&cfg));
-        gpio_set_level(gpio_pin2, 0);
-        ESP_LOGI(TAG, "activity LED on GPIO %d", gpio_pin2);
+        gpio_set_level(gpio2, 0);
+        ESP_LOGI(TAG, "activity LED on GPIO%d", gpio2);
     }
 
     esp_timer_create_args_t timer_args = {
@@ -129,7 +128,7 @@ esp_err_t status_led_init(void)
                         TAG, "create LED timer");
     current_state = STATUS_LED_BOOTING;
     ESP_RETURN_ON_ERROR(
-        esp_timer_start_periodic(led_timer, 125000),   // 125ms → 8Hz base
+        esp_timer_start_periodic(led_timer, 125000),   /* 125ms → 8Hz base */
         TAG, "start LED timer");
 
     ESP_LOGI(TAG, "LED timer started");
@@ -138,7 +137,7 @@ esp_err_t status_led_init(void)
 
 void status_led_set(status_led_state_t state)
 {
-    if (gpio_pin < 0 && gpio_pin2 < 0) return;
+    if (gpio1 < 0 && gpio2 < 0) return;
     if (state == current_state) return;
     current_state = state;
     tick = 0;
