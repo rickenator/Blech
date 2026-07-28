@@ -10,6 +10,7 @@
 #include "settings_store.h"
 #include "status_led.h"
 #include "wifi_manager.h"
+#include "serial_repl.h"
 
 static const char *TAG = "app";
 
@@ -31,6 +32,7 @@ void app_main(void)
     ESP_ERROR_CHECK(chat_service_start());
 
     err = wifi_manager_start();
+    serial_repl_start();
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Wi-Fi start failed: %s", esp_err_to_name(err));
         status_led_set(STATUS_LED_ERROR);

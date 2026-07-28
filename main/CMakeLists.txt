@@ -1,5 +1,6 @@
 idf_component_register(
     SRCS
+        "serial_repl.c"
         "status_led.c"
         "main.c"
         "settings_store.c"
@@ -14,6 +15,7 @@ idf_component_register(
         "certs/prvtkey.pem"
         "web/index.html"
     REQUIRES
+        esp_driver_uart
         esp_driver_gpio
         esp_https_server
         esp_http_client
@@ -26,4 +28,4 @@ idf_component_register(
         json
 )
 
-target_compile_options(${COMPONENT_LIB} PRIVATE -O3)
+target_compile_options(${COMPONENT_LIB} PRIVATE -O3 -Wno-unused-function)
