@@ -71,6 +71,13 @@ both cores, because even a contemptuous response deserves parallelism.
 | Inference speed | ~3.5 tok/s @ 240 MHz |
 | PSRAM used | ~4.5 MB for KV cache + activations + int8 head staging |
 
+
+<p align="center">
+  <img src="media/S3.png" width="400" alt="ESP32-S3 board — the sad little MCU running Blech">
+</p>
+
+*The actual hardware. $8 of regret on a breadboard.*
+
 ### How it was trained
 
 Training happened on a single RTX 3090 with 24 GB VRAM (a machine the model
