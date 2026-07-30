@@ -52,6 +52,6 @@ void app_main(void)
         ESP_LOGE(TAG, "BLE start failed: %s", esp_err_to_name(err));
     }
 
-    ESP_LOGI(TAG, "Blech ready; backend=%s",
+    ESP_LOGI(TAG, "PleaseWait ready; backend=%s",
              chat_service_model_ready() ? "ready" : "needs Wi-Fi");
 }

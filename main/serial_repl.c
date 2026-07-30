@@ -25,7 +25,7 @@ static bool serial_on_token(const char *text, void *ctx)
 static void serial_repl_task(void *arg)
 {
     (void)arg;
-    printf("\n=== Blech serial REPL ===\n");
+    printf("\n=== PleaseWait serial REPL ===\n");
     printf("Type a message and press Enter.\n\n");
 
     char line[REPL_BUF];
